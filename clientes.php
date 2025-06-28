@@ -1,93 +1,68 @@
-<?php include 'db.php'; ?>
-   <!DOCTYPE html>
-   <html lang="pt-BR">
-   <head>
-       <meta charset="UTF-8">
-       <title>Clientes</title>
-   </head>
-   <body>
-       <h1>Gerenciar Clientes</h1>
-       <a href="clientes.php?acao=novo">Novo Cliente</a>
-       <table>
-           <tr>
-               <th>ID</th>
-               <th>Nome</th>
-               <th>Email</th>
-               <th>Ações</th>
-           </tr>
-           <?php
-           // Listar clientes
-           $stmt = $pdo->query("SELECT * FROM tb_cliente");
-           while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-               echo "<tr>
-                       <td>{$row['id_cliente']}</td>
-                       <td>{$row['nm_cliente']}</td>
-                       <td>{$row['nm_email_cliente']}</td>
-                       <td>
-                           <a href='clientes.php?acao=editar&id={$row['id_cliente']}'>Editar</a>
-                           <a href='clientes.php?acao=deletar&id={$row['id_cliente']}'>Deletar</a>
-                       </td>
-                   </tr>";
-           }
-           ?>
-       </table>
-       <?php
-       // Adicionar, editar ou deletar cliente
-       if (isset($_GET['acao'])) {
-           if ($_GET['acao'] == 'novo' || $_GET['acao'] == 'editar') {
-               // Formulário para adicionar ou editar cliente
-               $id = $_GET['id'] ?? null;
-               $cliente = null;
-               if ($id) {
-                   $stmt = $pdo->prepare("SELECT * FROM tb_cliente WHERE id_cliente = ?");
-                   $stmt->execute([$id]);
-                   $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
-               }
-               ?>
-               <form method="POST" action="clientes.php">
-                   <input type="hidden" name="id_cliente" value="<?= $cliente['id_cliente'] ?? '' ?>">
-                   <label>Nome:</label>
-                   <input type="text" name="nm_cliente" value="<?= $cliente['nm_cliente'] ?? '' ?>" required>
-                   <label>Email:</label>
-                   <input type="email" name="nm_email_cliente" value="<?= $cliente['nm_email_cliente'] ?? '' ?>" required>
-                   <label>Telefone:</label>
-                   <input type="text" name="nr_telefone_cliente" value="<?= $cliente['nr_telefone_cliente'] ?? '' ?>" required>
-                   <label>Endereço:</label>
-                   <input type="text" name="nm_endereco_cliente" value="<?= $cliente['nm_endereco_cliente'] ?? '' ?>" required>
-                   <label>Número:</label>
-                   <input type="number" name="nr_endereco_cliente" value="<?= $cliente['nr_endereco_cliente'] ?? '' ?>" required>
-                   <button type="submit"><?= $id ? 'Atualizar' : 'Adicionar' ?></button>
-               </form>
-               <?php
-           } elseif ($_GET['acao'] == 'deletar') {
-               $id = $_GET['id'];
-               $stmt = $pdo->prepare("DELETE FROM tb_cliente WHERE id_cliente = ?");
-               $stmt->execute([$id]);
-               header("Location: clientes.php");
-           }
-       }
-
-       // Processar o formulário
-       if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-           $id_cliente = $_POST['id_cliente'] ?? null;
-           $nm_cliente = $_POST['nm_cliente'];
-           $nm_email_cliente = $_POST['nm_email_cliente'];
-           $nr_telefone_cliente = $_POST['nr_telefone_cliente'];
-           $nm_endereco_cliente = $_POST['nm_endereco_cliente'];
-           $nr_endereco_cliente = $_POST['nr_endereco_cliente'];
-
-           if ($id_cliente) {
-               // Atualizar cliente
-               $stmt = $pdo->prepare("UPDATE tb_cliente SET nm_cliente = ?, nm_email_cliente = ?, nr_telefone_cliente = ?, nm_endereco_cliente = ?, nr_endereco_cliente = ? WHERE id_cliente = ?");
-               $stmt->execute([$nm_cliente, $nm_email_cliente, $nr_telefone_cliente, $nm_endereco_cliente, $nr_endereco_cliente, $id_cliente]);
-           } else {
-               // Adicionar cliente
-               $stmt = $pdo->prepare("INSERT INTO tb_cliente (nm_cliente, nm_email_cliente, nr_telefone_cliente, nm_endereco_cliente, nr_endereco_cliente) VALUES (?, ?, ?, ?, ?)");
-               $stmt->execute([$nm_cliente, $nm_email_cliente, $nr_telefone_cliente, $nm_endereco_cliente, $nr_endereco_cliente]);
-           }
-           header("Location: clientes.php");
-       }
-       ?>
-   </body>
-   </html>
-   
+<?php include 'conexao.php'; ?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes - Depósito</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-dark text-gray-100">
+<div class="container mx-auto px-4 py-8">
+<header class="mb-8">
+<h1 class="text-3xl font-bold text-primary mb-2">Clientes</h1>
+<nav class="flex space-x-6 bg-gray-800 p-4 rounded-lg">
+<a href="index.php" class="hover:text-primary transition">Home</a>
+<a href="clientes.php" class="text-primary font-medium">Clientes</a>
+<a href="fornecedores.php" class="hover:text-primary transition">Fornecedores</a>
+<a href="produtos.php" class="hover:text-primary transition">Produtos</a>
+<a href="estoque.php" class="hover:text-primary transition">Estoque</a>
+<a href="pedidos.php" class="hover:text-primary transition">Pedidos</a>
+</nav>
+</header>
+ 
+        <div class="mb-6 flex justify-between items-center">
+<h2 class="text-2xl font-semibold">Lista de Clientes</h2>
+<a href="adicionar_cliente.php" class="bg-primary hover:bg-purple-900 text-white px-4 py-2 rounded transition">Adicionar Cliente</a>
+</div>
+ 
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+<div class="overflow-x-auto">
+<table class="w-full">
+<thead>
+<tr class="border-b border-gray-700">
+<th class="text-left py-2">ID</th>
+<th class="text-left py-2">Nome</th>
+<th class="text-left py-2">CPF</th>
+<th class="text-left py-2">Email</th>
+<th class="text-left py-2">Telefone</th>
+<th class="text-left py-2">Endereço</th>
+<th class="text-left py-2">Ações</th>
+</tr>
+</thead>
+<tbody>
+<?php
+                        $stmt = $pdo->query("SELECT * FROM tb_cliente");
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)):
+                        ?>
+<tr class="border-b border-gray-700 hover:bg-gray-700">
+<td class="py-2"><?= $row['id_cliente'] ?></td>
+<td class="py-2"><?= $row['nm_cliente'] ?></td>
+<td class="py-2"><?= $row['cpf_cliente'] ?></td>
+<td class="py-2"><?= $row['nm_email_cliente'] ?></td>
+<td class="py-2"><?= $row['nr_telefone_cliente'] ?></td>
+<td class="py-2"><?= $row['nm_endereco_cliente'] ?>, <?= $row['nr_endereco_cliente'] ?></td>
+<td class="py-2">
+<a href="editar_cliente.php?id=<?= $row['id_cliente'] ?>" class="text-yellow-400 hover:underline mr-3">Editar</a>
+<a href="excluir_cliente.php?id=<?= $row['id_cliente'] ?>" class="text-red-400 hover:underline" onclick="return confirm('Tem certeza que deseja excluir este cliente?')">Excluir</a>
+</td>
+</tr>
+<?php endwhile; ?>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</body>
+</html>
